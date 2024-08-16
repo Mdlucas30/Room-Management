@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Choose Your Role</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #1f1e1e;
+  position: relative;
+}
+
+.background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(255, 107, 129, 0.6), transparent);
+  transition: background 0.2s ease;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.role-button {
+  padding: 15px 30px;
+  margin: 10px;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.role-button:hover {
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transform: scale(1.05);
+}
+
+.student {
+  background-color: #4caf50;
+  color: white;
+}
+
+.faculty {
+  background-color: #2196f3;
+  color: white;
+}
+
+.admin {
+  background-color: #f44336;
+  color: white;
+}
+
+  </style>
+</head>
+<body>
+  <div class="background" id="background"></div>
+  <div class="container">
+    <h1>Choose Your Role</h1>
+    <button class="role-button student" onclick="navigateTo('student')">Student</button><br>
+    <button class="role-button faculty" onclick="navigateTo('faculty')">Faculty</button><br>
+    <button class="role-button admin" onclick="navigateTo('admin')">Admin</button>
+  </div>
+  <script>
+ document.addEventListener('mousemove', (e) => {
+  const background = document.getElementById('background');
+  const x = e.clientX / window.innerWidth;
+  const y = e.clientY / window.innerHeight;
+  background.style.background = `radial-gradient(circle at ${x * 100}% ${y * 100}%, rgba(255, 107, 129, 0.6), rgba(0, 0, 0, 0.9))`;
+});
+
+function navigateTo(role) {
+  const urlMap = {
+    student: 'student.html',
+    faculty: 'faculty.html',
+    admin: 'admin.html',
+  };
+  window.location.href = urlMap[role];
+}
+  </script>
+</body>
+</html>

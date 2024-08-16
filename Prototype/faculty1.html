@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faculty - Room Management</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAVjodIM72XO5LIqiQEJH-SSYHyyA4Jom8",
+      authDomain: "cict-hub.firebaseapp.com",
+      projectId: "cict-hub",
+      storageBucket: "cict-hub.appspot.com",
+      messagingSenderId: "324224152216",
+      appId: "1:324224152216:web:b6764c63cd02e941af16ed",
+      measurementId: "G-X3JCXCRHZ8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Fetch and display rooms
+    function displayRooms() {
+      const roomList = document.getElementById('room-list');
+      roomList.innerHTML = '';
+
+      // Real-time listener for rooms collection
+      onSnapshot(collection(db, 'rooms'), (snapshot) => {
+        roomList.innerHTML = '';
+
+        snapshot.forEach((doc) => {
+          const room = doc.data();
+          const li = document.createElement('li');
+          li.className = 'room-item';
+          li.innerHTML = `
+            <div class="room-info">
+              <div class="room-name">${room.name}</div>
+              <div class="room-floor">Floor: ${room.floor}</div>
+              <div class="room-status">Status: ${room.occupied ? 'Occupied' : 'Unoccupied'}</div>
+            </div>
+            <button class="schedule-btn" data-room-id="${doc.id}">See Schedule</button>
+            <button class="occupy-btn" data-room-id="${doc.id}" ${room.occupied ? 'disabled' : ''}>Occupy</button>
+            <button class="unoccupy-btn" data-room-id="${doc.id}" ${room.occupied ? '' : 'disabled'}>Unoccupy</button>
+          `;
+
+          // Event listener for the See Schedule button
+          li.querySelector('.schedule-btn').addEventListener('click', () => showSchedule(room));
+
+          // Event listener for the Occupy button
+          li.querySelector('.occupy-btn').addEventListener('click', () => updateRoomStatus(doc.id, true));
+
+          // Event listener for the Unoccupy button
+          li.querySelector('.unoccupy-btn').addEventListener('click', () => updateRoomStatus(doc.id, false));
+
+          roomList.appendChild(li);
+        });
+      });
+    }
+
+    function showSchedule(room) {
+      const modal = document.getElementById('schedule-modal');
+      const scheduleDetails = document.getElementById('schedule-details');
+      const closeBtn = modal.querySelector('.close');
+
+      let scheduleHTML = `
+        <h2>Schedule for ${room.name}</h2>
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th>Schedule</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      for (const [day, schedule] of Object.entries(room.schedules || {})) {
+        scheduleHTML += `
+          <tr>
+            <td><strong>${day}</strong></td>
+            <td>${schedule || 'No schedule'}</td>
+          </tr>
+        `;
+      }
+
+      scheduleHTML += `
+          </tbody>
+        </table>
+      `;
+
+      scheduleDetails.innerHTML = scheduleHTML;
+      modal.style.display = 'block';
+
+      closeBtn.onclick = () => modal.style.display = 'none';
+      window.onclick = (event) => {
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      };
+    }
+
+    // Function to update room status (occupy/unoccupy)
+    function updateRoomStatus(roomId, occupy) {
+      const roomRef = doc(db, "rooms", roomId);
+      updateDoc(roomRef, {
+        occupied: occupy
+      }).then(() => {
+        alert(`Room ${occupy ? 'occupied' : 'unoccupied'} successfully!`);
+      }).catch((error) => {
+        console.error(`Error updating room status: `, error);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      displayRooms();
+    });
+  </script>
+  <style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #1f1e1e;
+  color: #333;
+}
+
+.container {
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.container:hover {
+  transform: scale(1.02);
+}
+
+h1 {
+  margin-bottom: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.room-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.room-item:hover {
+  background-color: #f1f1f1;
+  transform: scale(1.02);
+}
+
+.room-info {
+  text-align: left;
+}
+
+.schedule-btn, .occupy-btn, .unoccupy-btn {
+  background-color: #4caf50;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.schedule-btn {
+  background-color: #2196f3;
+}
+
+.occupy-btn:disabled, .unoccupy-btn:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+
+.schedule-btn:hover, .occupy-btn:hover, .unoccupy-btn:hover {
+  transform: translateY(-2px);
+}
+
+#schedule-modal {
+  display: none;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.7); /* Darker background for focus */
+  padding-top: 60px;
+}
+
+.modal-content {
+  background-color: #fff;
+  margin: 5% auto;
+  padding: 20px;
+  border-radius: 10px;
+  width: 60%; /* Make the modal smaller for better focus */
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+#schedule-details {
+  margin-top: 20px;
+}
+
+h2 {
+  font-size: 24px;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.schedule-table th,
+.schedule-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.schedule-table th {
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+.schedule-table tr:hover {
+  background-color: #f1f1f1;
+}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Faculty - Room Management</h1>
+    <ul id="room-list"></ul>
+  </div>
+  <div id="schedule-modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <div id="schedule-details"></div>
+    </div>
+  </div>
+</body>
+</html>

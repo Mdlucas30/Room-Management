@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faculty Login</title>
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #1f1e1e;
+  position: relative;
+}
+
+.background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: radial-gradient(circle at center, transparent, transparent);
+  transition: background 0.1s;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.container:hover {
+  transform: scale(1.02);
+}
+
+h1 {
+  margin: 0 0 20px;
+  font-weight: 700;
+}
+
+form {
+  margin-bottom: 20px;
+}
+
+input {
+  padding: 15px;
+  width: calc(100% - 30px);
+  margin-bottom: 20px;
+  border: 2px solid #ddd;
+  border-radius: 5px;
+  font-size: 16px;
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+input:focus {
+  border-color: #ff6b81;
+  outline: none;
+  box-shadow: 0 0 5px rgba(255, 107, 129, 0.5);
+}
+
+button {
+  padding: 15px 30px;
+  border: none;
+  background-color: #12090b;
+  color: white;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+button:hover {
+  background-color: #ff4757;
+  box-shadow: 0 4px 15px rgba(255, 75, 95, 0.3);
+  transform: translateY(-2px);
+}
+
+.error {
+  color: red;
+  margin-bottom: 20px;
+}
+</style>
+</head>
+<body>
+  <div class="background" id="background"></div>
+  <div class="container">
+    <h1>Faculty Login</h1>
+    <form id="faculty-login-form">
+      <input type="text" id="username" placeholder="Username" required>
+      <input type="text" id="code" placeholder="Code" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <div class="error" id="error-message"></div>
+      <button type="submit">Login</button>
+    </form>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAVjodIM72XO5LIqiQEJH-SSYHyyA4Jom8",
+      authDomain: "cict-hub.firebaseapp.com",
+      projectId: "cict-hub",
+      storageBucket: "cict-hub.appspot.com",
+      messagingSenderId: "324224152216",
+      appId: "1:324224152216:web:b6764c63cd02e941af16ed",
+      measurementId: "G-X3JCXCRHZ8"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const facultyLoginForm = document.getElementById('faculty-login-form');
+    const errorMessage = document.getElementById('error-message');
+
+    document.addEventListener('mousemove', (e) => {
+  const background = document.querySelector('.background');
+  background.style.background = `radial-gradient(circle at ${e.clientX}px ${e.clientY}px, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.9))`;
+});
+
+    facultyLoginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const code = document.getElementById('code').value;
+      const password = document.getElementById('password').value;
+
+      const q = query(collection(db, 'Faculty'), where('Username', '==', username), where('Code', '==', code), where('Password', '==', password));
+
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        errorMessage.textContent = 'Invalid credentials. Please try again.';
+      } else {
+        window.location.href = 'faculty1.html';
+      }
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      const background = document.getElementById('background');
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+      background.style.background = `radial-gradient(circle at ${x * 100}% ${y * 100}%, rgba(255, 107, 129, 0.6), transparent)`;
+    });
+  </script>
+</body>
+</html>

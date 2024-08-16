@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Room Management</title>
+  <!-- Include Firebase SDK via CDN -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAVjodIM72XO5LIqiQEJH-SSYHyyA4Jom8",
+      authDomain: "cict-hub.firebaseapp.com",
+      projectId: "cict-hub",
+      storageBucket: "cict-hub.appspot.com",
+      messagingSenderId: "324224152216",
+      appId: "1:324224152216:web:b6764c63cd02e941af16ed",
+      measurementId: "G-X3JCXCRHZ8"
+    };
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // References
+    const addRoomForm = document.getElementById('add-room-form');
+    const roomList = document.getElementById('room-list');
+    let isEditMode = false;
+    let currentEditId = null;
+
+    // Add or update room
+    addRoomForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const roomName = document.getElementById('room-name').value;
+      const floor = document.getElementById('floor').value;
+      const schedules = {
+        monday: document.getElementById('monday').value,
+        tuesday: document.getElementById('tuesday').value,
+        wednesday: document.getElementById('wednesday').value,
+        thursday: document.getElementById('thursday').value,
+        friday: document.getElementById('friday').value,
+        saturday: document.getElementById('saturday').value,
+        sunday: document.getElementById('sunday').value
+      };
+
+      try {
+        if (isEditMode) {
+          // Update existing room
+          await updateDoc(doc(db, 'rooms', currentEditId), {
+            name: roomName,
+            floor: floor,
+            schedules: schedules
+          });
+          isEditMode = false;
+          currentEditId = null;
+          addRoomForm.querySelector('button').innerText = 'Add Room';
+        } else {
+          // Add new room
+          await addDoc(collection(db, 'rooms'), {
+            name: roomName,
+            floor: floor,
+            schedules: schedules
+          });
+        }
+        addRoomForm.reset();
+      } catch (e) {
+        console.error("Error adding/updating room: ", e);
+      }
+    });
+
+    // Real-time listener
+    onSnapshot(collection(db, 'rooms'), (snapshot) => {
+      roomList.innerHTML = '';
+      snapshot.forEach((doc) => {
+        const roomData = doc.data();
+        const li = document.createElement('li');
+        const schedulesStr = encodeURIComponent(JSON.stringify(roomData.schedules)); // Encode schedules string
+        li.innerHTML = `
+          ${roomData.name} - Floor: ${roomData.floor}
+          <button onclick="editRoom('${doc.id}', '${roomData.name}', '${roomData.floor}', '${schedulesStr}')">Edit</button>
+          <button onclick="deleteRoom('${doc.id}')">Delete</button>
+        `;
+        roomList.appendChild(li);
+      });
+    });
+
+    // Edit room
+    window.editRoom = (id, name, floor, schedules) => {
+      const roomName = document.getElementById('room-name');
+      const roomFloor = document.getElementById('floor');
+      const schedule = JSON.parse(decodeURIComponent(schedules)); // Decode schedules string
+
+      roomName.value = name;
+      roomFloor.value = floor;
+      document.getElementById('monday').value = schedule.monday || '';
+      document.getElementById('tuesday').value = schedule.tuesday || '';
+      document.getElementById('wednesday').value = schedule.wednesday || '';
+      document.getElementById('thursday').value = schedule.thursday || '';
+      document.getElementById('friday').value = schedule.friday || '';
+      document.getElementById('saturday').value = schedule.saturday || '';
+      document.getElementById('sunday').value = schedule.sunday || '';
+
+      isEditMode = true;
+      currentEditId = id;
+      addRoomForm.querySelector('button').innerText = 'Update Room';
+    };
+
+    // Delete room
+    window.deleteRoom = async (id) => {
+      try {
+        await deleteDoc(doc(db, 'rooms', id));
+      } catch (e) {
+        console.error("Error deleting room: ", e);
+      }
+    };
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+    body {
+      margin: 0;
+      font-family: 'Roboto', sans-serif;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #1f1e1e;
+      position: relative;
+    }
+    .background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: radial-gradient(circle at center, transparent, transparent);
+      transition: background 0.1s;
+    }
+    .container {
+      position: relative;
+      z-index: 1;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+    h1, h2 {
+      margin: 0 0 20px;
+      font-weight: 700;
+    }
+    form {
+      margin-bottom: 20px;
+    }
+    input {
+      padding: 15px;
+      width: calc(100% - 30px);
+      margin-bottom: 20px;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+      transition: border 0.3s ease;
+    }
+    input:focus {
+      border-color: #ff6b81;
+      outline: none;
+    }
+    button {
+      padding: 15px 30px;
+      border: none;
+      background-color: #12090b;
+      color: white;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    button:hover {
+      background-color: #ff4757;
+      box-shadow: 0 4px 15px rgba(255, 75, 95, 0.3);
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      padding: 10px 15px;
+      background-color: #f4f4f4;
+      border: 1px solid #ddd;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .form-container {
+      max-height: 80vh; /* Set maximum height */
+      overflow-y: auto; /* Enable vertical scrolling */
+      padding: 20px; /* Add padding for better appearance */
+    }
+    
+  </style>
+</head>
+<body>
+
+  <div class="form-container"> 
+  <div class="background" id="background"></div>
+  <div class="container">
+    <h1>Room Management Application</h1>
+    <form id="add-room-form">
+      <input type="text" id="room-name" placeholder="Room Name" required>
+      <input type="text" id="floor" placeholder="Floor" required>
+      <label for="monday">Monday:</label>
+      <input type="text" id="monday" placeholder="Monday Schedule">
+      <label for="tuesday">Tuesday:</label>
+      <input type="text" id="tuesday" placeholder="Tuesday Schedule">
+      <label for="wednesday">Wednesday:</label>
+      <input type="text" id="wednesday" placeholder="Wednesday Schedule">
+      <label for="thursday">Thursday:</label>
+      <input type="text" id="thursday" placeholder="Thursday Schedule">
+      <label for="friday">Friday:</label>
+      <input type="text" id="friday" placeholder="Friday Schedule">
+      <label for="saturday">Saturday:</label>
+      <input type="text" id="saturday" placeholder="Saturday Schedule">
+      <label for="sunday">Sunday:</label>
+      <input type="text" id="sunday" placeholder="Sunday Schedule">
+      <button type="submit">Add Room</button>
+    </form>
+    <ul id="room-list"></ul>
+  </div>
+  </div>
+  <script>
+    const bg = document.getElementById('background');
+    document.addEventListener('mousemove', (e) => {
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+      bg.style.background = `radial-gradient(circle at ${x * 100}% ${y * 100}%, #3e3b3b, #1f1e1e)`;
+    });
+
+    window.addEventListener('resize', () => {
+      bg.style.width = window.innerWidth + 'px';
+      bg.style.height = window.innerHeight + 'px';
+    });
+    
+  </script>
+</body>
+</html>
+
